@@ -267,6 +267,32 @@
                     </div>
                 </div>
                 
+                <!-- Applications Memory Usage Chart -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="card-title mb-0">
+                                    <i class="fas fa-laptop-code me-1"></i> Apps Memory Usage 
+                                    <span class="badge bg-primary">MS Word, Chrome, LinkedIn & more</span>
+                                </h6>
+                                <span class="badge bg-info" data-bs-toggle="tooltip" data-bs-placement="left" 
+                                       title="Shows memory usage of common applications like Chrome, MS Word, MS Excel, LinkedIn, Spotify, Zoom, Slack, Discord and more.">
+                                    <i class="fas fa-info-circle"></i>
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
+                                    <canvas id="applicationsMemoryChart"></canvas>
+                                </div>
+                                <div class="text-center small text-muted mt-2">
+                                    <i class="fas fa-laptop me-1"></i> Memory usage for common applications
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Process Table with Filtering -->
                 <div class="row mb-4">
                     <div class="col-12">

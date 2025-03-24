@@ -354,6 +354,24 @@ function createMemoryHeatmap(allocationData, canvasId) {
 }
 
 /**
+ * Format bytes to human-readable format (imported from dashboard.js)
+ * @param {number} bytes - Bytes to format
+ * @param {number} decimals - Number of decimal places
+ * @returns {string} Formatted string
+ */
+function formatBytes(bytes, decimals = 2) {
+    if (bytes === 0) return '0 Bytes';
+    
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+    
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+/**
  * Create a column chart displaying memory usage for common applications
  * @param {Array} appData - Data for common applications memory usage
  * @param {String} canvasId - ID of the canvas element
@@ -424,6 +442,34 @@ function createApplicationsMemoryChart(appData, canvasId) {
         }
     }
     
+    // If no target apps were found, add the top 5 most memory-intensive processes
+    if (chartLabels.length === 0) {
+        // Copy and sort processes by memory usage (descending)
+        const sortedProcesses = [...appData].sort((a, b) => b.memory_mb - a.memory_mb);
+        
+        // Take the top 5
+        const topProcesses = sortedProcesses.slice(0, 5);
+        
+        // Add them to our chart data
+        topProcesses.forEach((process, index) => {
+            // Generate a unique color based on index
+            const hue = (index * 50) % 360;
+            const color = `hsla(${hue}, 70%, 60%, 0.8)`;
+            
+            chartLabels.push(process.name);
+            chartData.push(process.memory_mb);
+            chartColors.push(color);
+            
+            // Also add to appMemoryData for tooltip access
+            appMemoryData[process.name] = {
+                totalMemoryMb: process.memory_mb,
+                processCount: 1,
+                displayName: process.name,
+                color: color
+            };
+        });
+    }
+    
     // Sort data by memory usage (descending)
     const sortedIndices = chartData.map((value, index) => index)
         .sort((a, b) => chartData[b] - chartData[a]);
@@ -467,12 +513,26 @@ function createApplicationsMemoryChart(appData, canvasId) {
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            const app = Object.keys(appMemoryData)[context.dataIndex];
-                            const data = appMemoryData[app];
-                            return [
-                                `Memory: ${formatBytes(data.totalMemoryMb * 1024 * 1024)}`,
-                                `Processes: ${data.processCount}`
-                            ];
+                            // Map sorted index back to app name
+                            const appName = sortedLabels[context.dataIndex];
+                            
+                            // Find the app data
+                            let appData = null;
+                            for (const [app, data] of Object.entries(appMemoryData)) {
+                                if (data.displayName === appName) {
+                                    appData = data;
+                                    break;
+                                }
+                            }
+                            
+                            if (appData) {
+                                return [
+                                    `Memory: ${formatBytes(appData.totalMemoryMb * 1024 * 1024)}`,
+                                    `Processes: ${appData.processCount}`
+                                ];
+                            } else {
+                                return `Memory: ${formatBytes(context.raw * 1024 * 1024)}`;
+                            }
                         }
                     }
                 }
