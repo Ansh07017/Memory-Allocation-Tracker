@@ -200,3 +200,231 @@ function createProcessMemoryChart(processData, canvasId) {
         }
     });
 }
+
+/**
+ * Create and update memory growth chart for potential leaks
+ * @param {Array} leakData - Process memory growth data
+ * @param {String} canvasId - ID of the canvas element
+ */
+function createMemoryGrowthChart(leakData, canvasId) {
+    // Sort processes by growth percentage in descending order
+    leakData.sort((a, b) => b.growth_percent - a.growth_percent);
+    
+    // Take only top 8 processes with highest growth
+    const topLeaks = leakData.slice(0, 8);
+    
+    // Prepare data for chart
+    const labels = topLeaks.map(p => `${p.name} (${p.pid})`);
+    const growthPercents = topLeaks.map(p => p.growth_percent);
+    
+    // Color coding based on growth percentage
+    const backgroundColors = growthPercents.map(percent => 
+        percent > 50 ? 'rgba(255, 99, 132, 0.6)' : 
+        percent > 30 ? 'rgba(255, 159, 64, 0.6)' : 
+        'rgba(54, 162, 235, 0.6)'
+    );
+    
+    const borderColors = growthPercents.map(percent => 
+        percent > 50 ? 'rgba(255, 99, 132, 1)' : 
+        percent > 30 ? 'rgba(255, 159, 64, 1)' : 
+        'rgba(54, 162, 235, 1)'
+    );
+    
+    // Get the canvas context
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    
+    // Create the chart
+    return new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Memory Growth (%)',
+                data: growthPercents,
+                backgroundColor: backgroundColors,
+                borderColor: borderColors,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            indexAxis: 'y',  // Horizontal bar chart
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Growth Rate (%)'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const leak = topLeaks[context.dataIndex];
+                            const startMemory = formatBytes(leak.start_memory_mb * 1024 * 1024);
+                            const currentMemory = formatBytes(leak.current_memory_mb * 1024 * 1024);
+                            return [
+                                `Growth: ${leak.growth_percent.toFixed(1)}%`,
+                                `Initial: ${startMemory}`,
+                                `Current: ${currentMemory}`,
+                                `Time: ${Math.round(leak.tracking_seconds / 60)} min`
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Create and update memory allocation heatmap
+ * @param {Array} allocationData - Memory allocation history data
+ * @param {String} canvasId - ID of the canvas element
+ */
+function createMemoryHeatmap(allocationData, canvasId) {
+    // This is a placeholder for a more complex heatmap visualization
+    // We'll use a basic line chart with gradient coloring for now
+    
+    // Extract data for the chart
+    const timestamps = allocationData.map(item => item.timestamp);
+    const allocValues = allocationData.map(item => item.allocation_mb);
+    
+    // Get min/max for color scaling
+    const minValue = Math.min(...allocValues);
+    const maxValue = Math.max(...allocValues);
+    
+    // Get the canvas context
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    
+    // Create gradient based on memory pressure
+    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, 'rgba(255, 99, 132, 1)');   // High pressure (red)
+    gradient.addColorStop(0.5, 'rgba(255, 205, 86, 1)'); // Medium pressure (yellow)
+    gradient.addColorStop(1, 'rgba(75, 192, 192, 1)');   // Low pressure (green)
+    
+    // Create the chart
+    return new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: timestamps,
+            datasets: [{
+                label: 'Memory Allocation (MB)',
+                data: allocValues,
+                borderColor: gradient,
+                backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                borderWidth: 2,
+                tension: 0.3,
+                fill: true,
+                pointBackgroundColor: function(context) {
+                    const value = context.dataset.data[context.dataIndex];
+                    const ratio = (value - minValue) / (maxValue - minValue);
+                    if (ratio > 0.66) return 'rgba(255, 99, 132, 1)';
+                    if (ratio > 0.33) return 'rgba(255, 205, 86, 1)';
+                    return 'rgba(75, 192, 192, 1)';
+                }
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Memory (MB)'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Time'
+                    }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Create and update memory fragmentation chart
+ * @param {Object} fragmentationData - Memory fragmentation data
+ * @param {String} canvasId - ID of the canvas element
+ */
+function createFragmentationChart(fragmentationData, canvasId) {
+    // Prepare data for chart
+    const labels = ['Small (<1KB)', 'Medium (1KB-1MB)', 'Large (>1MB)'];
+    const counts = [
+        fragmentationData.small_blocks_count,
+        fragmentationData.medium_blocks_count,
+        fragmentationData.large_blocks_count
+    ];
+    const sizes = [
+        fragmentationData.small_blocks_mb,
+        fragmentationData.medium_blocks_mb,
+        fragmentationData.large_blocks_mb
+    ];
+    
+    // Get the canvas context
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    
+    // Create the chart
+    return new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Block Count',
+                    data: counts,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Total Size (MB)',
+                    data: sizes,
+                    backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Block Count'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Size (MB)'
+                    },
+                    grid: {
+                        drawOnChartArea: false
+                    }
+                }
+            }
+        }
+    });
+}

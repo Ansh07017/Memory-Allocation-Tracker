@@ -520,6 +520,27 @@ function refreshData() {
         })
         .catch(error => {
             console.error('Error fetching process data:', error);
+        });
+        
+    // Fetch system information
+    fetch('/api/memory/system-info')
+        .then(response => response.json())
+        .then(data => {
+            updateSystemInfo(data);
+        })
+        .catch(error => {
+            console.error('Error fetching system info:', error);
+        });
+        
+    // Fetch alerts
+    const showActiveOnly = document.getElementById('show-active-alerts-only')?.checked || true;
+    fetch(`/api/memory/alerts?active_only=${showActiveOnly}`)
+        .then(response => response.json())
+        .then(data => {
+            updateAlerts(data);
+        })
+        .catch(error => {
+            console.error('Error fetching alerts data:', error);
         })
         .finally(() => {
             // Reset refresh button
