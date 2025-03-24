@@ -441,6 +441,14 @@ function updateProcessTable(processes) {
         }
     }
     
+    // Create or update the applications memory chart
+    if (processes.length > 0 && document.getElementById('applicationsMemoryChart')) {
+        if (window.applicationsMemoryChart) {
+            window.applicationsMemoryChart.destroy();
+        }
+        window.applicationsMemoryChart = createApplicationsMemoryChart(processes, 'applicationsMemoryChart');
+    }
+    
     // Store current processes for next comparison
     previousProcesses = [...processes];
 }

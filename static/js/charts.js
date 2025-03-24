@@ -354,6 +354,134 @@ function createMemoryHeatmap(allocationData, canvasId) {
 }
 
 /**
+ * Create a column chart displaying memory usage for common applications
+ * @param {Array} appData - Data for common applications memory usage
+ * @param {String} canvasId - ID of the canvas element
+ */
+function createApplicationsMemoryChart(appData, canvasId) {
+    // The application data we want to display
+    const targetApps = ['chrome', 'firefox', 'msedge', 'word', 'excel', 'outlook', 'teams', 'code', 'spotify', 'zoom', 'slack', 'discord'];
+    
+    // Filter and aggregate data for target applications
+    const appMemoryData = {};
+    const chartData = [];
+    const chartLabels = [];
+    const chartColors = [];
+    
+    // Map of app name patterns to display names and colors
+    const appDisplayNames = {
+        'chrome': { name: 'Chrome', color: 'rgba(66, 133, 244, 0.8)' },
+        'firefox': { name: 'Firefox', color: 'rgba(255, 117, 24, 0.8)' },
+        'msedge': { name: 'Edge', color: 'rgba(0, 120, 212, 0.8)' },
+        'word': { name: 'MS Word', color: 'rgba(43, 87, 154, 0.8)' },
+        'excel': { name: 'MS Excel', color: 'rgba(33, 115, 70, 0.8)' },
+        'outlook': { name: 'Outlook', color: 'rgba(0, 120, 212, 0.8)' },
+        'teams': { name: 'MS Teams', color: 'rgba(92, 45, 145, 0.8)' },
+        'code': { name: 'VS Code', color: 'rgba(0, 122, 204, 0.8)' },
+        'spotify': { name: 'Spotify', color: 'rgba(30, 215, 96, 0.8)' },
+        'zoom': { name: 'Zoom', color: 'rgba(74, 144, 226, 0.8)' },
+        'slack': { name: 'Slack', color: 'rgba(74, 21, 75, 0.8)' },
+        'discord': { name: 'Discord', color: 'rgba(114, 137, 218, 0.8)' },
+        'linkedin': { name: 'LinkedIn', color: 'rgba(0, 119, 181, 0.8)' }
+    };
+    
+    // Add LinkedIn to the targetApps
+    targetApps.push('linkedin');
+    
+    // First pass - find all process names that match our targets
+    appData.forEach(process => {
+        const processNameLower = process.name.toLowerCase();
+        
+        // Check if this process matches any of our target apps
+        for (const app of targetApps) {
+            if (processNameLower.includes(app)) {
+                // If we haven't seen this app yet, initialize it
+                if (!appMemoryData[app]) {
+                    appMemoryData[app] = {
+                        totalMemoryMb: 0,
+                        processCount: 0,
+                        displayName: appDisplayNames[app]?.name || app.charAt(0).toUpperCase() + app.slice(1),
+                        color: appDisplayNames[app]?.color || 'rgba(128, 128, 128, 0.8)'
+                    };
+                }
+                
+                // Add this process's memory to the app's total
+                appMemoryData[app].totalMemoryMb += process.memory_mb;
+                appMemoryData[app].processCount += 1;
+                
+                // We found a match, no need to check other app names
+                break;
+            }
+        }
+    });
+    
+    // Convert our aggregated data into arrays for the chart
+    for (const [app, data] of Object.entries(appMemoryData)) {
+        if (data.totalMemoryMb > 0) {
+            chartLabels.push(data.displayName);
+            chartData.push(data.totalMemoryMb);
+            chartColors.push(data.color);
+        }
+    }
+    
+    // Sort data by memory usage (descending)
+    const sortedIndices = chartData.map((value, index) => index)
+        .sort((a, b) => chartData[b] - chartData[a]);
+    
+    const sortedLabels = sortedIndices.map(index => chartLabels[index]);
+    const sortedData = sortedIndices.map(index => chartData[index]);
+    const sortedColors = sortedIndices.map(index => chartColors[index]);
+    
+    // Get the canvas context
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    
+    // Create the chart
+    return new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: sortedLabels,
+            datasets: [{
+                label: 'Memory Usage (MB)',
+                data: sortedData,
+                backgroundColor: sortedColors,
+                borderColor: sortedColors.map(color => color.replace('0.8', '1')),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Memory (MB)'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const app = Object.keys(appMemoryData)[context.dataIndex];
+                            const data = appMemoryData[app];
+                            return [
+                                `Memory: ${formatBytes(data.totalMemoryMb * 1024 * 1024)}`,
+                                `Processes: ${data.processCount}`
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+/**
  * Create and update memory fragmentation chart
  * @param {Object} fragmentationData - Memory fragmentation data
  * @param {String} canvasId - ID of the canvas element
