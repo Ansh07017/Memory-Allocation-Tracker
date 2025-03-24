@@ -44,6 +44,26 @@ document.addEventListener('DOMContentLoaded', function() {
             setRefreshRate(rate);
         });
     });
+    
+    // Auto-sort checkbox event listener
+    if (autoSortCheckbox) {
+        autoSortCheckbox.addEventListener('change', function() {
+            autoSortProcesses = this.checked;
+            
+            // Show a toast notification
+            if (this.checked) {
+                showToast('Auto-sorting processes enabled', 'info');
+            } else {
+                showToast('Auto-sorting processes disabled', 'info');
+            }
+            
+            // Refresh data immediately to apply the sorting
+            refreshData();
+        });
+    }
+    
+    // Add a custom class to the body for animation purposes
+    document.body.classList.add('animated-dashboard');
 });
 
 /**
@@ -329,8 +349,10 @@ function updateProcessTable(processes) {
     // Clear current table content
     tableBody.innerHTML = '';
     
-    // Sort processes by memory usage (descending)
-    processes.sort((a, b) => b.memory_percent - a.memory_percent);
+    // Sort processes by memory usage (descending) if auto-sort is enabled
+    if (autoSortProcesses) {
+        processes.sort((a, b) => b.memory_percent - a.memory_percent);
+    }
     
     // Add processes to table
     processes.forEach(process => {
@@ -424,12 +446,50 @@ function updateProcessTable(processes) {
 }
 
 /**
+ * Show a loading overlay during data fetching operations
+ * @param {boolean} show - Whether to show or hide the overlay
+ */
+function toggleLoadingOverlay(show) {
+    let overlay = document.getElementById('loading-overlay');
+    
+    // Create overlay if it doesn't exist
+    if (!overlay && show) {
+        overlay = document.createElement('div');
+        overlay.id = 'loading-overlay';
+        overlay.className = 'loading-overlay';
+        overlay.innerHTML = `
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        
+        // Add fade-in animation
+        setTimeout(() => {
+            overlay.classList.add('show');
+        }, 10);
+    } else if (overlay && !show) {
+        // Fade out animation before removing
+        overlay.classList.remove('show');
+        setTimeout(() => {
+            overlay.remove();
+        }, 300);
+    }
+}
+
+/**
  * Refresh all data from the API
  */
 function refreshData() {
     // Show loading spinner on refresh button
     refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Refreshing...';
     refreshBtn.disabled = true;
+    
+    // Show quick pulse on the refresh status indicator
+    const refreshStatus = document.getElementById('refresh-status');
+    if (refreshStatus) {
+        pulseElement(refreshStatus);
+    }
     
     // Fetch current memory data
     fetch('/api/memory/current')
