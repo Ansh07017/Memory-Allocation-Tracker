@@ -6,11 +6,13 @@
 // Global variables
 let refreshInterval = 3000; // Default refresh rate: 3 seconds
 let refreshTimer = null;
+let autoSortProcesses = true; // Default: auto-sort enabled
 
 // DOM elements
 const refreshBtn = document.getElementById('refresh-btn');
 const refreshRateLinks = document.querySelectorAll('.refresh-rate');
 const lastUpdateTime = document.getElementById('last-update-time');
+const autoSortCheckbox = document.getElementById('auto-sort-processes');
 
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', function() {
@@ -58,12 +60,80 @@ function setRefreshRate(seconds) {
     // Update refresh interval
     refreshInterval = seconds * 1000;
     
-    // Start new timer if rate is not 0 (paused)
+    // Update the refresh status indicator
+    const refreshStatus = document.getElementById('refresh-status');
+    
     if (seconds > 0) {
+        // Start new timer
         startAutoRefresh();
+        
+        // Update the refresh status with animation
+        refreshStatus.innerHTML = `<i class="fas fa-circle-notch fa-spin me-1"></i>Auto-refresh: ${seconds}s`;
+        refreshStatus.className = 'badge bg-success';
+        
+        // Show a toast notification
+        showToast(`Auto-refresh set to ${seconds} seconds`, 'success');
     } else {
+        // Update the refresh status for paused state
+        refreshStatus.innerHTML = `<i class="fas fa-pause me-1"></i>Auto-refresh: Paused`;
+        refreshStatus.className = 'badge bg-secondary';
+        
+        // Show a toast notification
+        showToast('Auto-refresh paused', 'info');
+        
         console.log('Auto-refresh paused');
     }
+}
+
+/**
+ * Show a toast notification
+ * @param {string} message - Message to display
+ * @param {string} type - Bootstrap alert type (success, danger, warning, info)
+ */
+function showToast(message, type = 'info') {
+    // Get the toast container, create it if it doesn't exist
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+        document.body.appendChild(toastContainer);
+    }
+    
+    // Create a new toast
+    const toastId = 'toast-' + Date.now();
+    const toast = document.createElement('div');
+    toast.id = toastId;
+    toast.className = `toast bg-${type} text-white border-0` ;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    toast.innerHTML = `
+        <div class="toast-header bg-${type} text-white">
+            <strong class="me-auto">Memory Tracker</strong>
+            <small>Just now</small>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            ${message}
+        </div>
+    `;
+    
+    // Add the toast to the container
+    toastContainer.appendChild(toast);
+    
+    // Initialize and show the toast
+    const bsToast = new bootstrap.Toast(toast, {
+        autohide: true,
+        delay: 2000
+    });
+    bsToast.show();
+    
+    // Remove the toast after it's hidden
+    toast.addEventListener('hidden.bs.toast', function () {
+        toast.remove();
+    });
 }
 
 /**
@@ -95,30 +165,133 @@ function formatBytes(bytes, decimals = 2) {
 }
 
 /**
+ * Apply pulse animation to an element
+ * @param {HTMLElement} element - Element to animate
+ */
+function pulseElement(element) {
+    // Remove any existing animation class
+    element.classList.remove('pulse-animation');
+    
+    // Trigger reflow to restart animation
+    void element.offsetWidth;
+    
+    // Add animation class
+    element.classList.add('pulse-animation');
+}
+
+/**
+ * Create and show a memory alert if threshold is exceeded
+ * @param {number} percent - Memory usage percentage
+ * @param {string} type - 'ram' or 'swap'
+ */
+function checkMemoryThreshold(percent, type) {
+    const alertsContainer = document.getElementById('memory-alerts');
+    const alertId = `${type}-alert`;
+    
+    // Remove existing alert if it exists
+    const existingAlert = document.getElementById(alertId);
+    if (existingAlert) {
+        existingAlert.remove();
+    }
+    
+    // Show alert if memory usage is high
+    if (percent > 85) {
+        const alert = document.createElement('div');
+        alert.id = alertId;
+        alert.className = 'alert alert-danger alert-dismissible fade show mt-2';
+        alert.innerHTML = `
+            <strong>Warning!</strong> ${type.toUpperCase()} usage is critically high (${percent.toFixed(1)}%).
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        // Add alert to container
+        alertsContainer.appendChild(alert);
+        
+        // Animate the alert
+        alert.style.animation = 'slideIn 0.5s ease-out';
+    } else if (percent > 70) {
+        const alert = document.createElement('div');
+        alert.id = alertId;
+        alert.className = 'alert alert-warning alert-dismissible fade show mt-2';
+        alert.innerHTML = `
+            <strong>Notice:</strong> ${type.toUpperCase()} usage is elevated (${percent.toFixed(1)}%).
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        // Add alert to container
+        alertsContainer.appendChild(alert);
+        
+        // Animate the alert
+        alert.style.animation = 'slideIn 0.5s ease-out';
+    }
+}
+
+/**
  * Update the UI with current memory data
  * @param {Object} data - Memory data from the API
  */
 function updateMemoryStats(data) {
+    // Store previous values for animation
+    const prevMemoryPercent = document.getElementById('memory-percent').textContent;
+    const prevSwapPercent = document.getElementById('swap-percent').textContent;
+    
     // Update RAM stats
     const memory = data.memory;
-    document.getElementById('memory-percent').textContent = `${memory.percent.toFixed(1)}%`;
-    document.getElementById('memory-bar').style.width = `${memory.percent}%`;
-    document.getElementById('memory-bar').setAttribute('aria-valuenow', memory.percent);
+    const memoryPercentElement = document.getElementById('memory-percent');
+    memoryPercentElement.textContent = `${memory.percent.toFixed(1)}%`;
+    
+    // Animate if value changed significantly
+    if (Math.abs(parseFloat(prevMemoryPercent) - memory.percent) > 1) {
+        pulseElement(memoryPercentElement);
+    }
+    
+    // Animate progress bar change
+    const memoryBar = document.getElementById('memory-bar');
+    memoryBar.style.transition = 'width 0.5s ease-in-out';
+    memoryBar.style.width = `${memory.percent}%`;
+    memoryBar.setAttribute('aria-valuenow', memory.percent);
+    
     document.getElementById('memory-total').textContent = formatBytes(memory.total);
-    document.getElementById('memory-used').textContent = formatBytes(memory.used);
+    
+    // Animate memory used value if it changes
+    const memoryUsedEl = document.getElementById('memory-used');
+    const newMemoryUsed = formatBytes(memory.used);
+    if (memoryUsedEl.textContent !== newMemoryUsed) {
+        memoryUsedEl.textContent = newMemoryUsed;
+        pulseElement(memoryUsedEl);
+    }
+    
     document.getElementById('memory-free').textContent = formatBytes(memory.free);
     
     // Update swap stats
     const swap = data.swap;
-    document.getElementById('swap-percent').textContent = `${swap.percent.toFixed(1)}%`;
-    document.getElementById('swap-bar').style.width = `${swap.percent}%`;
-    document.getElementById('swap-bar').setAttribute('aria-valuenow', swap.percent);
+    const swapPercentElement = document.getElementById('swap-percent');
+    swapPercentElement.textContent = `${swap.percent.toFixed(1)}%`;
+    
+    // Animate if value changed significantly
+    if (Math.abs(parseFloat(prevSwapPercent) - swap.percent) > 1) {
+        pulseElement(swapPercentElement);
+    }
+    
+    // Animate swap bar change
+    const swapBar = document.getElementById('swap-bar');
+    swapBar.style.transition = 'width 0.5s ease-in-out';
+    swapBar.style.width = `${swap.percent}%`;
+    swapBar.setAttribute('aria-valuenow', swap.percent);
+    
     document.getElementById('swap-total').textContent = formatBytes(swap.total);
-    document.getElementById('swap-used').textContent = formatBytes(swap.used);
+    
+    // Animate swap used value if it changes
+    const swapUsedEl = document.getElementById('swap-used');
+    const newSwapUsed = formatBytes(swap.used);
+    if (swapUsedEl.textContent !== newSwapUsed) {
+        swapUsedEl.textContent = newSwapUsed;
+        pulseElement(swapUsedEl);
+    }
+    
     document.getElementById('swap-free').textContent = formatBytes(swap.free);
     
-    // Update progress bar color based on usage
-    const memoryBar = document.getElementById('memory-bar');
+    // Update progress bar color based on usage with transition
     if (memory.percent < 60) {
         memoryBar.className = 'progress-bar bg-success';
     } else if (memory.percent < 85) {
@@ -127,9 +300,18 @@ function updateMemoryStats(data) {
         memoryBar.className = 'progress-bar bg-danger';
     }
     
-    // Update last update time
-    document.getElementById('last-update-time').textContent = data.timestamp;
+    // Check thresholds and show alerts if needed
+    checkMemoryThreshold(memory.percent, 'ram');
+    checkMemoryThreshold(swap.percent, 'swap');
+    
+    // Update last update time with animation
+    const lastUpdateEl = document.getElementById('last-update-time');
+    lastUpdateEl.textContent = data.timestamp;
+    pulseElement(lastUpdateEl);
 }
+
+// Store previous process data for comparison
+let previousProcesses = [];
 
 /**
  * Update the process table with current data
@@ -138,12 +320,33 @@ function updateMemoryStats(data) {
 function updateProcessTable(processes) {
     const tableBody = document.getElementById('process-table-body');
     
+    // Create a map of previous processes for quick lookup
+    const previousProcessMap = {};
+    previousProcesses.forEach(proc => {
+        previousProcessMap[proc.pid] = proc;
+    });
+    
     // Clear current table content
     tableBody.innerHTML = '';
+    
+    // Sort processes by memory usage (descending)
+    processes.sort((a, b) => b.memory_percent - a.memory_percent);
     
     // Add processes to table
     processes.forEach(process => {
         const row = document.createElement('tr');
+        row.dataset.pid = process.pid;
+        
+        // Check if this process existed in the previous data
+        const previousProcess = previousProcessMap[process.pid];
+        const isNew = !previousProcess;
+        
+        // Determine if memory usage changed significantly
+        let memoryChanged = false;
+        if (previousProcess) {
+            const memoryDiff = Math.abs(process.memory_percent - previousProcess.memory_percent);
+            memoryChanged = memoryDiff > 1; // 1% change threshold
+        }
         
         // Add memory usage class based on percentage
         if (process.memory_percent > 10) {
@@ -152,24 +355,72 @@ function updateProcessTable(processes) {
             row.classList.add('table-warning');
         }
         
+        // Add animation classes for new or changed processes
+        if (isNew) {
+            row.classList.add('new-process');
+        } else if (memoryChanged) {
+            row.classList.add('memory-changed');
+        }
+        
+        // Create a progress bar color based on memory usage
+        let progressBarClass = 'bg-success';
+        if (process.memory_percent > 10) {
+            progressBarClass = 'bg-danger';
+        } else if (process.memory_percent > 5) {
+            progressBarClass = 'bg-warning';
+        }
+        
+        // Create a trend indicator if this process existed before
+        let trendIndicator = '';
+        if (previousProcess) {
+            if (process.memory_percent > previousProcess.memory_percent + 0.5) {
+                trendIndicator = '<i class="fas fa-arrow-up text-danger ms-1"></i>';
+            } else if (process.memory_percent < previousProcess.memory_percent - 0.5) {
+                trendIndicator = '<i class="fas fa-arrow-down text-success ms-1"></i>';
+            }
+        }
+        
         row.innerHTML = `
             <td>${process.pid}</td>
-            <td>${process.name}</td>
+            <td>
+                <div class="d-flex align-items-center">
+                    <span>${process.name}</span>
+                    ${isNew ? '<span class="badge bg-info ms-2">New</span>' : ''}
+                </div>
+            </td>
             <td>${process.username}</td>
             <td>${formatBytes(process.memory_mb * 1024 * 1024)}</td>
             <td>
                 <div class="d-flex align-items-center">
                     <div class="progress flex-grow-1 me-2" style="height: 6px;">
-                        <div class="progress-bar" role="progressbar" style="width: ${process.memory_percent}%;" 
+                        <div class="progress-bar ${progressBarClass}" role="progressbar" 
+                            style="width: ${process.memory_percent}%; transition: width 0.5s ease-in-out;" 
                             aria-valuenow="${process.memory_percent}" aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
-                    <span class="small">${process.memory_percent.toFixed(1)}%</span>
+                    <span class="small">
+                        ${process.memory_percent.toFixed(1)}%
+                        ${trendIndicator}
+                    </span>
                 </div>
             </td>
         `;
         
         tableBody.appendChild(row);
     });
+    
+    // Update the process counter
+    const processCounter = document.getElementById('process-counter');
+    if (processCounter) {
+        processCounter.textContent = processes.length;
+        
+        // Animate the counter if the number changed
+        if (previousProcesses.length !== processes.length) {
+            pulseElement(processCounter);
+        }
+    }
+    
+    // Store current processes for next comparison
+    previousProcesses = [...processes];
 }
 
 /**

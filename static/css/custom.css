@@ -10,6 +10,12 @@
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
 }
 
 .card-header {
@@ -21,6 +27,11 @@
 .progress {
     background-color: rgba(0, 0, 0, 0.2);
     border-radius: 5px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    transition: width 0.5s ease-in-out, background-color 0.5s ease;
 }
 
 /* Memory stats customization */
@@ -35,10 +46,55 @@
     overflow-y: auto;
 }
 
-/* Refresh button animation */
+tr.new-process {
+    animation: fadeIn 1s ease;
+}
+
+tr.memory-changed {
+    animation: pulseRow 1s ease;
+}
+
+/* Badge styling */
+.badge {
+    transition: all 0.3s ease;
+}
+
+/* Animation keyframes */
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; background-color: rgba(13, 202, 240, 0.2); }
+    to { opacity: 1; background-color: transparent; }
+}
+
+@keyframes pulseRow {
+    0% { background-color: rgba(255, 193, 7, 0.2); }
+    50% { background-color: rgba(255, 193, 7, 0.1); }
+    100% { background-color: transparent; }
+}
+
+@keyframes pulse-animation {
+    0% { color: var(--bs-info); }
+    50% { color: var(--bs-warning); }
+    100% { color: inherit; }
+}
+
+@keyframes slideIn {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes highlight {
+    0% { background-color: rgba(255, 255, 255, 0.1); }
+    100% { background-color: transparent; }
+}
+
+/* Element animations */
+.pulse-animation {
+    animation: pulse-animation 0.8s ease;
 }
 
 .fa-sync-alt {
@@ -47,6 +103,66 @@
 
 #refresh-btn:hover .fa-sync-alt {
     transform: rotate(180deg);
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+/* Toast animations */
+.toast {
+    transition: all 0.3s ease;
+}
+
+.toast.show {
+    animation: slideIn 0.3s ease-out;
+}
+
+/* Progress indicator for auto-refresh */
+#refresh-status {
+    transition: all 0.3s ease;
+}
+
+/* Memory alerts container */
+#memory-alerts {
+    transition: all 0.3s ease;
+}
+
+#memory-alerts .alert {
+    margin-bottom: 8px;
+    animation: slideIn 0.5s ease-out;
+}
+
+/* Process trend indicators */
+.fa-arrow-up, .fa-arrow-down {
+    animation: fadeIn 0.5s ease;
+}
+
+/* Theme enhancements */
+[data-bs-theme="dark"] {
+    --bs-body-bg: #121212;
+    --bs-body-color: #f8f9fa;
+}
+
+[data-bs-theme="dark"] .card {
+    background-color: #1e1e1e;
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-bs-theme="dark"] .card-header {
+    border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-bs-theme="dark"] .table {
+    color: #e9ecef;
+}
+
+[data-bs-theme="dark"] .table-striped>tbody>tr:nth-of-type(odd)>* {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+[data-bs-theme="dark"] .progress {
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
 /* Responsive adjustments */
@@ -62,28 +178,4 @@
     .memory-details .col {
         margin-bottom: 5px;
     }
-}
-
-/* Dark theme enhancement */
-[data-bs-theme="dark"] {
-    --bs-body-bg: #121212;
-    --bs-body-color: #f8f9fa;
-}
-
-[data-bs-theme="dark"] .card {
-    background-color: #1e1e1e;
-}
-
-[data-bs-theme="dark"] .table {
-    color: #e9ecef;
-}
-
-/* Animation for data updates */
-@keyframes highlight {
-    0% { background-color: rgba(255, 255, 255, 0.1); }
-    100% { background-color: transparent; }
-}
-
-.highlight {
-    animation: highlight 1s ease-out;
 }
