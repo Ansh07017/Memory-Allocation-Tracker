@@ -1,0 +1,89 @@
+/* Custom styles for Memory Tracker */
+
+/* Dashboard container styles */
+.dashboard-container {
+    padding: 20px;
+}
+
+/* Card customization */
+.card {
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.card-header {
+    background-color: var(--bs-dark);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Progress bar customization */
+.progress {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+}
+
+/* Memory stats customization */
+.memory-details {
+    font-size: 0.85rem;
+    margin-top: 8px;
+}
+
+/* Process table customization */
+.table-responsive {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Refresh button animation */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.fa-sync-alt {
+    transition: transform 0.3s ease;
+}
+
+#refresh-btn:hover .fa-sync-alt {
+    transform: rotate(180deg);
+}
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
+    .card-title {
+        font-size: 1rem;
+    }
+    
+    .memory-details .row {
+        flex-direction: column;
+    }
+    
+    .memory-details .col {
+        margin-bottom: 5px;
+    }
+}
+
+/* Dark theme enhancement */
+[data-bs-theme="dark"] {
+    --bs-body-bg: #121212;
+    --bs-body-color: #f8f9fa;
+}
+
+[data-bs-theme="dark"] .card {
+    background-color: #1e1e1e;
+}
+
+[data-bs-theme="dark"] .table {
+    color: #e9ecef;
+}
+
+/* Animation for data updates */
+@keyframes highlight {
+    0% { background-color: rgba(255, 255, 255, 0.1); }
+    100% { background-color: transparent; }
+}
+
+.highlight {
+    animation: highlight 1s ease-out;
+}
