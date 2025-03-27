@@ -1,5 +1,6 @@
 import os
 import logging
+from datetime import datetime
 from flask import Flask, render_template, jsonify, request, send_file
 from memory_tracker import MemoryTracker
 
@@ -145,14 +146,42 @@ def export_memory_data():
         logger.error(f"Error exporting memory data: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-@app.route('/exports/<path:filename>')
+@app.route('/api/memory/exports')
+def list_exports():
+    """List all exported files."""
+    try:
+        if not os.path.exists('exports'):
+            return jsonify([])
+        files = []
+        for f in os.listdir('exports'):
+            file_path = os.path.join('exports', f)
+            if os.path.isfile(file_path):
+                files.append({
+                    'name': f,
+                    'date': datetime.fromtimestamp(os.path.getctime(file_path)).strftime('%Y-%m-%d %H:%M:%S'),
+                    'size': os.path.getsize(file_path)
+                })
+        return jsonify(sorted(files, key=lambda x: x['date'], reverse=True))
+    except Exception as e:
+        logger.error(f"Error listing exports: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/download/<path:filename>')
 def download_export(filename):
     """Download an exported file."""
     try:
-        return send_file(os.path.join('exports', filename))
+        file_path = os.path.join(memory_tracker.export_dir, filename)
+        if not os.path.exists(file_path):
+            return jsonify({"error": "File not found"}), 404
+            
+        return send_file(
+            file_path,
+            as_attachment=True,
+            download_name=filename
+        )
     except Exception as e:
         logger.error(f"Error downloading export file: {str(e)}")
-        return jsonify({"error": str(e)}), 404
+        return jsonify({"error": "Download failed"}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

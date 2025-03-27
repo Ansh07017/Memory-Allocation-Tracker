@@ -51,11 +51,11 @@
                                     </div>
                                     <div class="d-flex align-items-center">
                                         <i class="fas fa-tools fa-fw me-2 text-info"></i>
-                                        <div class="dropdown">
+                                        <div class="dropdown position-static">
                                             <a class="btn btn-sm btn-dark dropdown-toggle" href="#" role="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                                 Export
                                             </a>
-                                            <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                                            <ul class="dropdown-menu dropdown-menu-centered" aria-labelledby="exportDropdown">
                                                 <li><a class="dropdown-item" href="#" id="export-json-btn">Export as JSON</a></li>
                                                 <li><a class="dropdown-item" href="#" id="export-csv-btn">Export as CSV</a></li>
                                             </ul>
@@ -67,7 +67,7 @@
                     </div>
                 </div>
 
-                <!-- Main Memory Stats and Charts 
+                <!-- Main Memory Stats and Charts -->
                 <div class="row mb-4" style="width: 100%; height: 400px;"></div>
                 <div class="row mb-4">
                     <div class="col-md-6">
@@ -75,7 +75,6 @@
                             <div class="card-header">
                                 <h6 class="card-title mb-0">Current Memory Usage</h6>
                             </div>
-                            -->
                             <div class="card-body">
                                 <div class="memory-gauges">
                                     <div class="row">
@@ -112,7 +111,7 @@
                                     <div class="col-12 mb-2" id="memory-alerts">
                                         <!-- Alerts will be added dynamically here -->
                                     </div>
-                                    
+
                                     <div class="col-12">
                                         <div class="alert alert-info small">
                                             <div class="d-flex align-items-center justify-content-between">
@@ -143,7 +142,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Tabs for different views -->
                 <div class="row mb-4">
                     <div class="col-12">
@@ -179,7 +178,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <!-- Long-term Trends Tab -->
                             <div class="tab-pane fade" id="longterm" role="tabpanel" aria-labelledby="longterm-tab">
                                 <div class="card border-top-0 rounded-top-0">
@@ -197,7 +196,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <!-- Alerts Tab -->
                             <div class="tab-pane fade" id="alerts" role="tabpanel" aria-labelledby="alerts-tab">
                                 <div class="card border-top-0 rounded-top-0">
@@ -216,7 +215,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <!-- Memory Leaks Tab -->
                             <div class="tab-pane fade" id="leaks" role="tabpanel" aria-labelledby="leaks-tab">
                                 <div class="card border-top-0 rounded-top-0">
@@ -268,9 +267,9 @@
                         </div>
                     </div>
                 </div>
-                
-                
-                
+
+
+
                 <!-- Process Table with Filtering -->
                 <div class="row mb-4">
                     <div class="col-12">
@@ -320,7 +319,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <!-- Filter Processes Tab -->
                                 <div class="tab-pane fade" id="filter-content">
                                     <div class="card-body">
