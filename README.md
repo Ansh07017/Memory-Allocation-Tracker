@@ -13,6 +13,7 @@ Features:
 4. Lightweight & Fast: Operates smoothly without consuming system resources.
 5. Cross-Platform Support: Supports various operating systems smoothly.
 
-
+IMPORTANT
+WHEN DOWLOADING SOURCE CODE CHANGE THE git folder into .git
 
 
