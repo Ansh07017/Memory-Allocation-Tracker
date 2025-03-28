@@ -67,13 +67,13 @@
                     </div>
                 </div>
 
-                <!-- Main Memory Stats and Charts -->
+                <!-- Main Memory Stats and Charts 
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <div class="card h-100">
                             <div class="card-header">
                                 <h6 class="card-title mb-0">Current Memory Usage</h6>
-                            </div>
+                            </div>-->
                             <div class="card-body">
                                 <div class="memory-gauges">
                                     <div class="row">
@@ -165,6 +165,16 @@
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="leaks-tab" data-bs-toggle="tab" data-bs-target="#leaks" type="button" role="tab" aria-controls="leaks" aria-selected="false">
                                     <i class="fas fa-tint me-1"></i> Memory Leaks
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="paging-simulation-tab" data-bs-toggle="tab" data-bs-target="#paging-simulation" type="button" role="tab" aria-controls="paging-simulation" aria-selected="false">
+                                    <i class="fas fa-book me-1"></i> Paging Simulation
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="segmentation-simulation-tab" data-bs-toggle="tab" data-bs-target="#segmentation-simulation" type="button" role="tab" aria-controls="segmentation-simulation" aria-selected="false">
+                                    <i class="fas fa-puzzle-piece me-1"></i> Segmentation
                                 </button>
                             </li>
                         </ul>
@@ -263,11 +273,59 @@
                                     </div>
                                 </div>
                             </div>
+                            
+                            <!-- Paging Simulation Tab -->
+                            <div class="tab-pane fade" id="paging-simulation" role="tabpanel" aria-labelledby="paging-simulation-tab">
+                                <div class="card border-top-0 rounded-top-0">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h6 class="mb-0">Memory Paging Simulation</h6>
+                                            <div>
+                                                <label for="page-size-selector" class="form-label small me-2">Page Size:</label>
+                                                <select class="form-select form-select-sm d-inline-block w-auto" id="page-size-selector">
+                                                    <option value="1">1 KB</option>
+                                                    <option value="2">2 KB</option>
+                                                    <option value="4" selected>4 KB</option>
+                                                    <option value="8">8 KB</option>
+                                                    <option value="16">16 KB</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div id="paging-simulation-container">
+                                            <div class="text-center my-5">
+                                                <div class="spinner-border text-primary" role="status">
+                                                    <span class="visually-hidden">Loading...</span>
+                                                </div>
+                                                <p class="mt-2">Loading paging simulation...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Segmentation Simulation Tab -->
+                            <div class="tab-pane fade" id="segmentation-simulation" role="tabpanel" aria-labelledby="segmentation-simulation-tab">
+                                <div class="card border-top-0 rounded-top-0">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h6 class="mb-0">Memory Segmentation Simulation</h6>
+                                        </div>
+                                        <div id="segmentation-simulation-container">
+                                            <div class="text-center my-5">
+                                                <div class="spinner-border text-primary" role="status">
+                                                    <span class="visually-hidden">Loading...</span>
+                                                </div>
+                                                <p class="mt-2">Loading segmentation simulation...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Applications Memory Usage Chart -->
+                <!-- Applications Memory Usage Chart 
                 <div class="row mb-4">
                     <div class="col-12">
                         <div class="card">
@@ -291,7 +349,7 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> -->
                 
                 <!-- Process Table with Filtering -->
                 <div class="row mb-4">

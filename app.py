@@ -1,8 +1,5 @@
 import os
 import logging
-from datetime import datetime
-from flask import Flask, render_template, jsonify
-import psutil
 from flask import Flask, render_template, jsonify, request, send_file
 from memory_tracker import MemoryTracker
 
@@ -127,8 +124,6 @@ def filter_processes():
         logger.error(f"Error filtering processes: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-
-
 @app.route('/api/memory/export')
 def export_memory_data():
     """API endpoint to export memory data to a file."""
@@ -150,91 +145,35 @@ def export_memory_data():
         logger.error(f"Error exporting memory data: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/memory/segments')
-def get_memory_segments():
-    """API endpoint to get memory segmentation data for current process."""
+@app.route('/api/memory/paging')
+def get_paging_simulation():
+    """API endpoint to get memory paging simulation data."""
     try:
-        process = psutil.Process(os.getpid())
-        memory_segments = process.memory_maps()
-        
-        segment_data = []
-        for segment in memory_segments:
-            segment_data.append({
-                "path": segment.path if segment.path else "[Anonymous]",
-                "rss": segment.rss // 1024,  # Convert to KB
-                "dirty": segment.dirty // 1024
-            })
-            
-        return jsonify(segment_data)
+        page_size = int(request.args.get('page_size', 4))
+        data = memory_tracker.simulate_paging(page_size_kb=page_size)
+        return jsonify(data)
     except Exception as e:
-        logger.error(f"Error getting memory segments: {str(e)}")
+        logger.error(f"Error simulating paging: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/memory/exports')
-def list_exports():
-    """List all exported files."""
+@app.route('/api/memory/segmentation')
+def get_segmentation_simulation():
+    """API endpoint to get memory segmentation simulation data."""
     try:
-        if not os.path.exists('exports'):
-            return jsonify([])
-        files = []
-        for f in os.listdir('exports'):
-            file_path = os.path.join('exports', f)
-            if os.path.isfile(file_path):
-                files.append({
-                    'name': f,
-                    'date': datetime.fromtimestamp(os.path.getctime(file_path)).strftime('%Y-%m-%d %H:%M:%S'),
-                    'size': os.path.getsize(file_path)
-                })
-        return jsonify(sorted(files, key=lambda x: x['date'], reverse=True))
+        data = memory_tracker.simulate_segmentation()
+        return jsonify(data)
     except Exception as e:
-        logger.error(f"Error listing exports: {str(e)}")
+        logger.error(f"Error simulating segmentation: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-@app.route('/download/<path:filename>')
+@app.route('/exports/<path:filename>')
 def download_export(filename):
     """Download an exported file."""
     try:
-        file_path = os.path.join(memory_tracker.export_dir, filename)
-        if not os.path.exists(file_path):
-            return jsonify({"error": "File not found"}), 404
-            
-        return send_file(
-            file_path,
-            as_attachment=True,
-            download_name=filename
-        )
+        return send_file(os.path.join('exports', filename))
     except Exception as e:
         logger.error(f"Error downloading export file: {str(e)}")
-        return jsonify({"error": "Download failed"}), 500
+        return jsonify({"error": str(e)}), 404
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
-@app.route("/api/memory/segments")
-def get_memory_segments():
-    process = psutil.Process(os.getpid())
-    memory_segments = process.memory_maps()
-
-    segment_data = []
-    for segment in memory_segments[:10]:  # Limit to 10 segments for visualization
-        segment_data.append({
-            "path": segment.path if segment.path else "[Anonymous]",
-            "rss": segment.rss // 1024,  # Convert to KB
-            "dirty": segment.dirty // 1024
-        })
-
-    return jsonify(segment_data)
-
-@app.route("/api/memory/paging")
-def get_memory_paging():
-    vm_stats = psutil.virtual_memory()
-    swap_stats = psutil.swap_memory()
-
-    paging_data = {
-        "total_memory": vm_stats.total // (1024 * 1024),  # Convert to MB
-        "available_memory": vm_stats.available // (1024 * 1024),
-        "page_faults": psutil.cpu_stats().ctx_switches,  # Approximate page faults
-        "swap_used": swap_stats.used // (1024 * 1024),
-        "swap_free": swap_stats.free // (1024 * 1024),
-    }
-
-    return jsonify(paging_data)
